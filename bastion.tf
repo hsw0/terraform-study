@@ -1,28 +1,28 @@
-resource "random_id" "jumpbox-instance" {
+resource "random_id" "bastion-instance" {
   byte_length = 6
 }
 
-resource "aws_instance" "jumpbox" {
+resource "aws_instance" "bastion" {
   ami           = "${data.aws_ami.amazon-linux-v1.id}"
   instance_type = "t2.nano"
 
   key_name = "${aws_key_pair.master.key_name}"
 
-  vpc_security_group_ids = ["${aws_security_group.jumpbox.id}"]
+  vpc_security_group_ids = ["${aws_security_group.bastion.id}"]
 
   subnet_id = "${aws_subnet.private-ec2-a.id}"
 
   tags = "${merge(var.default_tags, map(
-    "Name", "jumpbox-${random_id.jumpbox-instance.hex}"
+    "Name", "bastion-${random_id.bastion-instance.hex}"
   ))}"
 }
 
-resource "aws_security_group" "jumpbox" {
+resource "aws_security_group" "bastion" {
   description = "Jumpbox Instance"
   vpc_id      = "${aws_vpc.vpc.id}"
 
   tags = "${merge(var.default_tags, map(
-    "Name", "jumpbox"
+    "Name", "bastion"
   ))}"
 
   ingress {
@@ -48,8 +48,8 @@ resource "aws_security_group" "jumpbox" {
   }
 }
 
-resource "aws_lb" "nlb-jumpbox" {
-  name               = "jumpbox-${random_id.jumpbox-instance.hex}"
+resource "aws_lb" "nlb-bastion" {
+  name               = "bastion-${random_id.bastion-instance.hex}"
   load_balancer_type = "network"
   internal           = false
 
@@ -66,38 +66,38 @@ resource "aws_lb" "nlb-jumpbox" {
   ))}"
 }
 
-output "jumpbox-hostname" {
-  value = "${aws_lb.nlb-jumpbox.dns_name}"
+output "bastion-hostname" {
+  value = "${aws_lb.nlb-bastion.dns_name}"
 }
 
-resource "aws_lb_target_group" "nlb-jumpbox" {
+resource "aws_lb_target_group" "nlb-bastion" {
   port     = 22
   protocol = "TCP"
   vpc_id   = "${aws_vpc.vpc.id}"
 }
 
-resource "aws_lb_target_group_attachment" "nlb-jumpbox" {
-  target_group_arn = "${aws_lb_target_group.nlb-jumpbox.arn}"
-  target_id        = "${aws_instance.jumpbox.id}"
+resource "aws_lb_target_group_attachment" "nlb-bastion" {
+  target_group_arn = "${aws_lb_target_group.nlb-bastion.arn}"
+  target_id        = "${aws_instance.bastion.id}"
   port             = 22
 }
 
-resource "aws_lb_listener" "nlb-jumpbox" {
-  load_balancer_arn = "${aws_lb.nlb-jumpbox.arn}"
+resource "aws_lb_listener" "nlb-bastion" {
+  load_balancer_arn = "${aws_lb.nlb-bastion.arn}"
   port              = "22"
   protocol          = "TCP"
 
   default_action {
-    target_group_arn = "${aws_lb_target_group.nlb-jumpbox.arn}"
+    target_group_arn = "${aws_lb_target_group.nlb-bastion.arn}"
     type             = "forward"
   }
 }
 
 /*
-resource "aws_eip" "jumpbox" {
+resource "aws_eip" "bastion" {
   vpc = true
 
-  instance   = "${aws_instance.jumpbox.id}"
+  instance   = "${aws_instance.bastion.id}"
   depends_on = ["aws_internet_gateway.igw"]
 }
 */
