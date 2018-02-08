@@ -13,6 +13,7 @@ terraform {
 
 variable "default_tags" {
   type = "map"
+
   default = {
     "Owner" = "nobody@example.com"
 
@@ -20,11 +21,10 @@ variable "default_tags" {
   }
 }
 
-data "aws_region" "current" { }
-
+data "aws_region" "current" {}
 
 variable "office-cidrs" {
-  default = [ "2.2.2.2/32" ]
+  default = ["2.2.2.2/32"]
 }
 
 variable "vpc_name" {
