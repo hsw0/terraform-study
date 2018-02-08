@@ -64,6 +64,10 @@ resource "aws_lb" "nlb-bastion" {
   tags = "${merge(var.default_tags, map(
     "Name", "${var.vpc_name}-public"
   ))}"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 output "bastion-hostname" {
@@ -90,6 +94,10 @@ resource "aws_lb_listener" "nlb-bastion" {
   default_action {
     target_group_arn = "${aws_lb_target_group.nlb-bastion.arn}"
     type             = "forward"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
